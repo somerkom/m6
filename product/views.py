@@ -1,7 +1,7 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-
+from common.permissions import IsModerator
 from .models import Product, Category, Review
 from .serializers import CategorySerializer, ProductSerializer, ReviewSerializer, ProductDetailSerializer, ReviewValidateSerializer
 from .serializers import ProductWithReviewsSerializer, CategoryWithCountSerialzier, ProductValidateSerializer, CategoryValidateSerializer
@@ -44,6 +44,13 @@ class CategoryDetailAPIView(RetrieveUpdateDestroyAPIView):
 
 class ProductListCreateAPIView(ListCreateAPIView):
     queryset = Product.objects.all()
+    permission_classes = [IsModerator]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_staff:
+            return Product.objects.all()
+        return Product.objects.filter(owner=user)
 
     def get_serializer_class(self):
         if self.request.method == 'POST':
@@ -58,13 +65,15 @@ class ProductListCreateAPIView(ListCreateAPIView):
                 title=serializer.validated_data['title'],
                 description=serializer.validated_data['description'],
                 price=serializer.validated_data['price'],
-                category_id=serializer.validated_data['category']
+                category_id=serializer.validated_data['category'],
+                owner=request.user
             )
         return Response(ProductSerializer(product).data, status=status.HTTP_201_CREATED)
 
 class ProductDetailAPIView(RetrieveUpdateDestroyAPIView):
     queryset = Product.objects.all()
     lookup_field = 'id'
+    permission_classes = [IsModerator]
 
     def get_serializer_class(self):
         if self.request.method in ['PUT', 'PATCH']:
@@ -79,6 +88,7 @@ class ProductDetailAPIView(RetrieveUpdateDestroyAPIView):
         product.description = serializer.validated_data['description']
         product.price = serializer.validated_data['price']
         product.category_id = serializer.validated_data['category']
+        product.owner = request.user
         product.save()
         return Response(ProductDetailSerializer(product).data, status=status.HTTP_201_CREATED)
 

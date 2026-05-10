@@ -24,9 +24,16 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG')
-
-ALLOWED_HOSTS = []
-
+SWAGGER_SETTINGS = {
+    'SECURITY_DEFINITIONS': {
+        'Token': {
+            'type': 'apiKey',
+            'name': 'Authorization',
+            'in': 'header',
+            'description': 'Token <token>'
+        }
+    }
+}
 
 # Application definition
 
