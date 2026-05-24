@@ -9,6 +9,8 @@ from .models import ConfirmationCode
 from rest_framework.views import APIView
 import random
 from django.contrib.auth import get_user_model
+from rest_framework_simplejwt.views import TokenObtainPairView
+from users.serializers import CustomTokenObtainPairSerializer
 
 User = get_user_model()
 
@@ -35,8 +37,9 @@ class RegistrationAPIView(APIView):
 
         email = serializer.validated_data.get('email')
         password = serializer.validated_data.get('password')
+        birthdate = serializer.validated_data.get('birthdate')
 
-        user = User.objects.create_user(email=email, password=password, is_active=False)
+        user = User.objects.create_user(email=email, password=password, birthdate=birthdate,  is_active=False)
 
         code = ''.join([str(random.randint(0, 9)) for _ in range(6)])
         ConfirmationCode.objects.create(user=user, code=code)
@@ -105,3 +108,7 @@ def confirm_user_api_view(request):
         serializer.save()
         return Response({"detail": "Пользователь подтвержден и активирован"}, status=status.HTTP_200_OK)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
